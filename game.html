@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XO Game</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #f7f7f7;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Game container */
+    .game-container {
+      text-align: center;
+      background-color: #ffffff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      width: 400px;
+      max-width: 100%;
+      border: 4px solid #4CAF50;
+      transition: transform 0.3s ease;
+    }
+
+    .game-container:hover {
+      transform: scale(1.05);
+    }
+
+    /* Game title */
+    .game-title {
+      font-size: 2.5rem;
+      color: #333;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    /* Board styling */
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cell {
+      width: 100%;
+      height: 100%;
+      background-color: #f1f1f1;
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3rem;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      height: 100px; /* Ensure each cell has a fixed height */
+      border: 2px solid #ccc; /* Add border to each cell */
+    }
+
+    .cell:hover {
+      background-color: #e0e0e0;
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Player colors */
+    .X {
+      color: #ff6347; /* Red for X */
+    }
+
+    .O {
+      color: #1e90ff; /* Blue for O */
+    }
+
+    .winner {
+      background-color: #ffd700;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Message and buttons */
+    .message {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .buttons button {
+      font-size: 1.2rem;
+      padding: 12px 24px;
+      margin: 10px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .buttons button:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #language-toggle {
+      background-color: #008CBA;
+    }
+
+    #language-toggle:hover {
+      background-color: #0077B6;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h1 class="game-title">XO Game</h1>
+    <div class="board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    <p class="message"></p>
+    <div class="buttons">
+      <button id="restart">Restart</button>
+      <button id="language-toggle">Change Language</button>
+    </div>
+  </div>
+
+  <script>
+    let currentPlayer = 'X';
+    let board = ['', '', '', '', '', '', '', '', ''];
+    let gameActive = true;
+    const messageElement = document.querySelector('.message');
+    const restartButton = document.getElementById('restart');
+    const languageToggleButton = document.getElementById('language-toggle');
+
+    const winningPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+      [0, 4, 8], [2, 4, 6] // Diagonals
+    ];
+
+    function handleCellClick(index) {
+      if (board[index] !== '' || !gameActive) return;
+
+      // Update cell with the current player and apply the color class (X or O)
+      board[index] = currentPlayer;
+      const cell = document.querySelector(`[data-index='${index}']`);
+      cell.textContent = currentPlayer;
+      cell.classList.add(currentPlayer); // Add class for color (X or O)
+
+      // Check for a winner
+      if (checkWinner()) {
+        gameActive = false;
+        setTimeout(() => messageElement.textContent = `${currentPlayer} ${messages[currentLang].won}`, 200);
+        highlightWinner();
+        return;
+      }
+
+      // Check for a draw
+      if (board.every(cell => cell !== '')) {
+        gameActive = false;
+        setTimeout(() => messageElement.textContent = messages[currentLang].draw, 200);
+        return;
+      }
+
+      // Switch player
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    }
+
+    function checkWinner() {
+      return winningPatterns.some(pattern => {
+        const [a, b, c] = pattern;
+        return board[a] && board[a] === board[b] && board[a] === board[c];
+      });
+    }
+
+    function highlightWinner() {
+      winningPatterns.forEach(pattern => {
+        const [a, b, c] = pattern;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          document.querySelector(`[data-index='${a}']`).classList.add('winner');
+          document.querySelector(`[data-index='${b}']`).classList.add('winner');
+          document.querySelector(`[data-index='${c}']`).classList.add('winner');
+        }
+      });
+    }
+
+    function resetGame() {
+      board = ['', '', '', '', '', '', '', '', ''];
+      gameActive = true;
+      currentPlayer = 'X';
+      messageElement.textContent = '';
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.textContent = '';
+        cell.classList.remove('winner', 'X', 'O'); // Remove all classes for reset
+      });
+    }
+
+    document.querySelectorAll('.cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        handleCellClick(cell.getAttribute('data-index'));
+      });
+    });
+
+    restartButton.addEventListener('click', resetGame);
+
+    // Language Toggle Functionality
+    const messages = {
+      en: {
+        won: "Won!",
+        draw: "It's a draw!"
+      },
+      ar: {
+        won: "فاز!",
+        draw: "تعادل!"
+      }
+    };
+
+    let currentLang = 'en';
+
+    languageToggleButton.addEventListener('click', () => {
+      if (currentLang === 'en') {
+        currentLang = 'ar';
+        document.documentElement.lang = 'ar';
+        restartButton.textContent = 'إعادة التشغيل';
+        languageToggleButton.textContent = 'Change Language';
+        document.querySelector('.game-title').textContent = 'لعبة XO';
+      } else {
+        currentLang = 'en';
+        document.documentElement.lang = 'en';
+        restartButton.textContent = 'Restart';
+        languageToggleButton.textContent = 'تغيير اللغة';
+        document.querySelector('.game-title').textContent = 'XO Game';
+      }
+    });
+  </script>
+</body>
+</html>
